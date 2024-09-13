@@ -1,78 +1,112 @@
+// game.js
 const canvas = document.getElementById('gameCanvas');
-const context = canvas.getContext('2d');
+const ctx = canvas.getContext('2d');
 
+// Canvas dimensions
+canvas.width = 400;
+canvas.height = 600;
+
+// Set canvas background color
+ctx.fillStyle = 'black'; // Background color
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+// Car properties
 const carWidth = 50;
 const carHeight = 100;
 let carX = canvas.width / 2 - carWidth / 2;
-let carY = canvas.height - carHeight - 10;
+const carY = canvas.height - carHeight - 10;
+
+// Other car (enemy) properties
+let enemyX = Math.random() * (canvas.width - carWidth);
+let enemyY = 0 - carHeight;
+const enemySpeed = 4;
+
+// Key press states
+let leftPressed = false;
+let rightPressed = false;
+
+// Car movement speed
 const carSpeed = 5;
 
-let obstacles = [];
-const obstacleWidth = 50;
-const obstacleHeight = 100;
-const obstacleSpeed = 5;
-let gameOver = false;
+// Event listeners for key presses
+document.addEventListener('keydown', keyDownHandler);
+document.addEventListener('keyup', keyUpHandler);
 
-// Handle user input
-document.addEventListener('keydown', function(event) {
-    if (event.key === 'ArrowLeft' && carX > 0) {
+function keyDownHandler(e) {
+    if (e.key === "ArrowLeft") {
+        leftPressed = true;
+    } else if (e.key === "ArrowRight") {
+        rightPressed = true;
+    }
+}
+
+function keyUpHandler(e) {
+    if (e.key === "ArrowLeft") {
+        leftPressed = false;
+    } else if (e.key === "ArrowRight") {
+        rightPressed = false;
+    }
+}
+
+// Score variable
+let score = 0;
+
+// Update game logic
+function update() {
+    // Move player car
+    if (leftPressed && carX > 0) {
         carX -= carSpeed;
-    } else if (event.key === 'ArrowRight' && carX < canvas.width - carWidth) {
+    }
+    if (rightPressed && carX < canvas.width - carWidth) {
         carX += carSpeed;
     }
-});
 
-// Game loop
-function gameLoop() {
-    if (!gameOver) {
-        update();
-        draw();
-        requestAnimationFrame(gameLoop);
+    // Move enemy car
+    enemyY += enemySpeed;
+    if (enemyY > canvas.height) {
+        enemyY = 0 - carHeight;
+        enemyX = Math.random() * (canvas.width - carWidth);
+        score += 1; // Increment score when enemy passes
+    }
+
+    // Collision detection
+    if (carX < enemyX + carWidth &&
+        carX + carWidth > enemyX &&
+        carY < enemyY + carHeight &&
+        carY + carHeight > enemyY) {
+        alert("Game Over! Your score: " + score);
+        document.location.reload();
     }
 }
 
-// Update game state
-function update() {
-    // Update obstacles
-    for (let i = 0; i < obstacles.length; i++) {
-        obstacles[i].y += obstacleSpeed;
-        if (obstacles[i].y > canvas.height) {
-            obstacles.splice(i, 1);
-            i--;
-        }
-    }
-
-    // Check for collisions
-    for (let obstacle of obstacles) {
-        if (carX < obstacle.x + obstacleWidth &&
-            carX + carWidth > obstacle.x &&
-            carY < obstacle.y + obstacleHeight &&
-            carY + carHeight > obstacle.y) {
-            gameOver = true;
-            alert('Game Over!');
-        }
-    }
-
-    // Add new obstacles
-    if (Math.random() < 0.02) {
-        const obstacleX = Math.random() * (canvas.width - obstacleWidth);
-        obstacles.push({ x: obstacleX, y: -obstacleHeight });
-    }
-}
-
-// Draw game state
+// Draw the game scene
 function draw() {
-    context.clearRect(0, 0, canvas.width, canvas.height);
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw car
-    context.fillStyle = 'red';
-    context.fillRect(carX, carY, carWidth, carHeight);
+    // Draw canvas background
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw obstacles
-    context.fillStyle = 'blue';
-    for (let obstacle of obstacles) {
-        context.fillRect(obstacle.x, obstacle.y, obstacleWidth, obstacleHeight);
-    }
+    // Draw player car
+    ctx.fillStyle = 'blue';
+    ctx.fillRect(carX, carY, carWidth, carHeight);
+
+    // Draw enemy car
+    ctx.fillStyle = 'red';
+    ctx.fillRect(enemyX, enemyY, carWidth, carHeight);
+
+    // Draw score
+    ctx.font = "20px Arial";
+    ctx.fillStyle = "white"; // Ensure text color is white
+    ctx.fillText("Score: " + score, 10, 30);
+}
+
+// Main game loop
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
 }
 
 // Start the game
