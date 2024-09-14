@@ -1,17 +1,282 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Basic Car Game</title>
-    <style>
-        canvas {
-            display: block;
-            margin: 0 auto;
-            background: #000;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple 3D Car Game</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+    #gameCanvas {
+      background-color: #f0f0f0;
+      position: fixed;
+      top: 0;
+      left: 0;
+    }
+    #score {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 20px;
+    }
+    #highScore {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 20px;
+    }
+    #gameOver {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 30px;
+      display: none;
+      color: white;
+    }
+    #retryButton {
+      position: absolute;
+      top: 60%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 10px 20px;
+      font-size: 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      display: none;
+    }
+    #retryButton:hover {
+      background-color: #45a049;
+    }
+    .sparkle {
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      background-color: yellow;
+      border-radius: 50%;
+      animation: sparkleAnimation 1s ease-out forwards;
+    }
+    @keyframes sparkleAnimation {
+      0% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(2);
+      }
+    }
+  </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
-    <script src="game.js"></script>
+  <canvas id="gameCanvas"></canvas>
+  <div id="score">Score: 0</div>
+  <div id="highScore">High Score: 0</div>
+  <div id="gameOver">Game Over!</div>
+  <button id="retryButton">Retry</button>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let car = {
+      x: canvas.width / 2,
+      y: canvas.height - 70,
+      width: 30,
+      height: 50,
+      speed: 5,
+      dx: 0 // Velocity for smoother movement
+    };
+
+    let road = {
+      width: 200,
+      color: "#808080",
+      x: (canvas.width - 200) / 2,
+    };
+
+    let obstacles = [];
+    let score = 0;
+    let highScore = localStorage.getItem('highScore') || 0;
+    let gameOver = false;
+
+    document.getElementById('highScore').textContent = `High Score: ${highScore}`;
+
+    function createObstacle() {
+      let obstacle = {
+        x: road.x + Math.random() * (road.width - 30),
+        y: -50,
+        width: 30,
+        height: 50,
+        speed: 4 + Math.random() * 3,
+        color: getRandomColor(),
+      };
+
+      // Check for overlap with other obstacles
+      if (!checkOverlap(obstacle)) {
+        obstacles.push(obstacle);
+      } else {
+        // Retry creating the obstacle if there's an overlap
+        createObstacle();
+      }
+    }
+
+    // Function to check if the new obstacle overlaps with existing obstacles
+    function checkOverlap(newObstacle) {
+      for (let i = 0; i < obstacles.length; i++) {
+        let obstacle = obstacles[i];
+        if (
+          newObstacle.x < obstacle.x + obstacle.width &&
+          newObstacle.x + newObstacle.width > obstacle.x &&
+          newObstacle.y < obstacle.y + obstacle.height &&
+          newObstacle.y + newObstacle.height > obstacle.y
+        ) {
+          return true; // Overlap found
+        }
+      }
+      return false; // No overlap
+    }
+
+    function getRandomColor() {
+      const letters = "0123456789ABCDEF";
+      let color = "#";
+      for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
+    }
+
+    function updateObstacles() {
+      obstacles.forEach((obstacle, index) => {
+        obstacle.y += obstacle.speed;
+
+        if (obstacle.y > canvas.height) {
+          obstacles.splice(index, 1);
+        }
+      });
+    }
+
+    function checkCollision() {
+      obstacles.forEach((obstacle) => {
+        if (
+          car.x < obstacle.x + obstacle.width &&
+          car.x + car.width > obstacle.x &&
+          car.y < obstacle.y + obstacle.height &&
+          car.y + car.height > obstacle.y
+        ) {
+          gameOver = true;
+        }
+      });
+    }
+
+    function drawRoad() {
+      ctx.fillStyle = road.color;
+      ctx.fillRect(road.x, 0, road.width, canvas.height);
+    }
+
+    function drawCar() {
+      ctx.fillStyle = "red";
+      ctx.fillRect(car.x, car.y, car.width, car.height);
+    }
+
+    function drawObstacles() {
+      obstacles.forEach((obstacle) => {
+        ctx.fillStyle = obstacle.color;
+        ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+      });
+    }
+
+    function drawScore() {
+      document.getElementById("score").textContent = "Score: " + score;
+    }
+
+    function celebrate() {
+      for (let i = 0; i < 100; i++) {
+        let sparkle = document.createElement("div");
+        sparkle.classList.add("sparkle");
+        sparkle.style.left = `${Math.random() * window.innerWidth}px`;
+        sparkle.style.top = `${Math.random() * window.innerHeight}px`;
+        document.body.appendChild(sparkle);
+
+        setTimeout(() => {
+          sparkle.remove();
+        }, 1000);
+      }
+    }
+
+    function update() {
+      if (gameOver) {
+        document.getElementById("gameOver").style.display = "block";
+        document.getElementById("retryButton").style.display = "block";
+
+        if (score > highScore) {
+          highScore = score;
+          localStorage.setItem('highScore', highScore);
+          document.getElementById('highScore').textContent = `High Score: ${highScore}`;
+          celebrate(); // Trigger celebration
+        }
+        return;
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      drawRoad();
+      drawCar();
+      drawObstacles();
+      drawScore();
+
+      updateObstacles();
+      checkCollision();
+
+      // Update car position smoothly
+      car.x += car.dx;
+
+      // Ensure the car doesn't go off the road
+      if (car.x < road.x) car.x = road.x;
+      if (car.x + car.width > road.x + road.width) car.x = road.x + road.width - car.width;
+
+      score++;
+
+      if (Math.random() < 0.02) {
+        createObstacle();
+      }
+
+      requestAnimationFrame(update);
+    }
+
+    // Smooth car movement: Start movement on key down and stop on key up
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowLeft") {
+        car.dx = -car.speed;
+      } else if (event.key === "ArrowRight") {
+        car.dx = car.speed;
+      }
+    });
+
+    document.addEventListener("keyup", (event) => {
+      if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+        car.dx = 0;
+      }
+    });
+
+    // Retry button functionality
+    document.getElementById("retryButton").addEventListener("click", () => {
+      score = 0;
+      obstacles = [];
+      gameOver = false;
+      document.getElementById("gameOver").style.display = "none";
+      document.getElementById("retryButton").style.display = "none";
+      update();
+    });
+
+    update();
+  </script>
 </body>
 </html>
