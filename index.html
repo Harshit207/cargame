@@ -57,19 +57,30 @@
       position: absolute;
       width: 5px;
       height: 5px;
-      background-color: yellow;
       border-radius: 50%;
-      animation: sparkleAnimation 1s ease-out forwards;
+      background-color: yellow;
+      transform-origin: center;
+      animation: firecrackerAnimation 1s ease-out;
     }
-    @keyframes sparkleAnimation {
+    @keyframes firecrackerAnimation {
       0% {
         opacity: 1;
-        transform: scale(1);
+        transform: scale(1) translateY(0) rotate(0deg);
       }
       100% {
         opacity: 0;
-        transform: scale(2);
+        transform: scale(0) translateY(-100px) rotate(720deg);
       }
+    }
+    #celebrationText {
+      position: absolute;
+      top: 30%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 40px;
+      display: none;
+      color: gold;
+      text-shadow: 2px 2px 4px black;
     }
   </style>
 </head>
@@ -79,6 +90,7 @@
   <div id="highScore">High Score: 0</div>
   <div id="gameOver">Game Over!</div>
   <button id="retryButton">Retry</button>
+  <div id="celebrationText">New High Score!</div>
 
   <script>
     const canvas = document.getElementById("gameCanvas");
@@ -88,12 +100,12 @@
     canvas.height = window.innerHeight;
 
     let car = {
-      x: canvas.width / 2,
+      x: canvas.width / 2 - 15,
       y: canvas.height - 70,
       width: 30,
       height: 50,
       speed: 5,
-      dx: 0 // Velocity for smoother movement
+      dx: 0
     };
 
     let road = {
@@ -119,16 +131,13 @@
         color: getRandomColor(),
       };
 
-      // Check for overlap with other obstacles
       if (!checkOverlap(obstacle)) {
         obstacles.push(obstacle);
       } else {
-        // Retry creating the obstacle if there's an overlap
         createObstacle();
       }
     }
 
-    // Function to check if the new obstacle overlaps with existing obstacles
     function checkOverlap(newObstacle) {
       for (let i = 0; i < obstacles.length; i++) {
         let obstacle = obstacles[i];
@@ -138,10 +147,10 @@
           newObstacle.y < obstacle.y + obstacle.height &&
           newObstacle.y + newObstacle.height > obstacle.y
         ) {
-          return true; // Overlap found
+          return true;
         }
       }
-      return false; // No overlap
+      return false;
     }
 
     function getRandomColor() {
@@ -197,18 +206,28 @@
       document.getElementById("score").textContent = "Score: " + score;
     }
 
-    function celebrate() {
+    function createFirecracker(x, y) {
       for (let i = 0; i < 100; i++) {
         let sparkle = document.createElement("div");
         sparkle.classList.add("sparkle");
-        sparkle.style.left = `${Math.random() * window.innerWidth}px`;
-        sparkle.style.top = `${Math.random() * window.innerHeight}px`;
+        sparkle.style.backgroundColor = getRandomColor(); // Random color for each sparkle
+        sparkle.style.left = `${x}px`;
+        sparkle.style.top = `${y}px`;
+        sparkle.style.transform = `translate(-50%, -50%) scale(${Math.random() * 2}) rotate(${Math.random() * 360}deg)`;
         document.body.appendChild(sparkle);
-
         setTimeout(() => {
-          sparkle.remove();
+          sparkle.remove(); // Clean up after animation
         }, 1000);
       }
+    }
+
+    function celebrate() {
+      const celebrationText = document.getElementById("celebrationText");
+      createFirecracker(canvas.width / 2, canvas.height / 2);
+      celebrationText.style.display = "block";
+      setTimeout(() => {
+        celebrationText.style.display = "none";
+      }, 3000);
     }
 
     function update() {
@@ -220,7 +239,7 @@
           highScore = score;
           localStorage.setItem('highScore', highScore);
           document.getElementById('highScore').textContent = `High Score: ${highScore}`;
-          celebrate(); // Trigger celebration
+          celebrate();
         }
         return;
       }
@@ -235,10 +254,8 @@
       updateObstacles();
       checkCollision();
 
-      // Update car position smoothly
       car.x += car.dx;
 
-      // Ensure the car doesn't go off the road
       if (car.x < road.x) car.x = road.x;
       if (car.x + car.width > road.x + road.width) car.x = road.x + road.width - car.width;
 
@@ -251,28 +268,49 @@
       requestAnimationFrame(update);
     }
 
-    // Smooth car movement: Start movement on key down and stop on key up
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "ArrowLeft") {
+    // Function to handle key presses
+    function handleKeyDown(event) {
+      if (event.code === "ArrowLeft") {
         car.dx = -car.speed;
-      } else if (event.key === "ArrowRight") {
+      } else if (event.code === "ArrowRight") {
         car.dx = car.speed;
       }
-    });
+    }
 
-    document.addEventListener("keyup", (event) => {
-      if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+    // Function to handle key releases
+    function handleKeyUp(event) {
+      if (event.code === "ArrowLeft" || event.code === "ArrowRight") {
         car.dx = 0;
+      }
+    }
+
+    // Add event listeners for key presses
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keyup", handleKeyUp);
+
+    // Function to handle touch events (for mobile)
+    canvas.addEventListener('touchstart', (event) => {
+      const touchX = event.touches[0].clientX;
+
+      if (touchX < canvas.width / 2) {
+        car.dx = -car.speed; // Move left
+      } else {
+        car.dx = car.speed; // Move right
       }
     });
 
-    // Retry button functionality
-    document.getElementById("retryButton").addEventListener("click", () => {
-      score = 0;
+       canvas.addEventListener('touchend', () => {
+      car.dx = 0; // Stop moving when touch ends
+    });
+
+    document.getElementById('retryButton').addEventListener('click', () => {
       obstacles = [];
+      score = 0;
       gameOver = false;
-      document.getElementById("gameOver").style.display = "none";
-      document.getElementById("retryButton").style.display = "none";
+      car.x = canvas.width / 2 - car.width / 2;
+      car.y = canvas.height - car.height - 10;
+      document.getElementById('gameOver').style.display = 'none';
+      document.getElementById('retryButton').style.display = 'none';
       update();
     });
 
@@ -280,3 +318,4 @@
   </script>
 </body>
 </html>
+
