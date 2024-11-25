@@ -1,0 +1,124 @@
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    font-family: 'Arial', sans-serif;
+}
+
+.game-container {
+    position: relative;
+    padding: clamp(10px, 2vw, 20px);
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    backdrop-filter: blur(4px);
+    width: 90%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+canvas {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    background: linear-gradient(to bottom, #2c3e50, #3498db);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    touch-action: none;
+}
+
+.score-container {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    padding: clamp(5px, 1.5vw, 10px);
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.score, .high-score {
+    color: #fff;
+    font-size: clamp(14px, 3vw, 20px);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    padding: clamp(5px, 1.5vw, 8px) clamp(8px, 2vw, 15px);
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    flex: 1;
+    min-width: 120px;
+    text-align: center;
+}
+
+.controls {
+    margin-top: clamp(10px, 2vw, 20px);
+    text-align: center;
+}
+
+button {
+    padding: clamp(8px, 2vw, 12px) clamp(20px, 4vw, 30px);
+    font-size: clamp(14px, 3vw, 18px);
+    background: linear-gradient(45deg, #3498db, #2980b9);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(45deg, #2980b9, #3498db);
+}
+
+.game-over {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    padding: clamp(15px, 3vw, 20px);
+    border-radius: 10px;
+    text-align: center;
+    color: white;
+    z-index: 100;
+    width: 80%;
+    max-width: 300px;
+}
+
+.game-over h2 {
+    color: #e74c3c;
+    margin: 0 0 15px 0;
+    font-size: clamp(18px, 4vw, 24px);
+}
+
+.instructions {
+    color: #fff;
+    text-align: center;
+    margin-top: clamp(10px, 2vw, 15px);
+    font-size: clamp(12px, 2.5vw, 14px);
+    opacity: 0.7;
+}
+
+@media (max-width: 480px) {
+    .score-container {
+        flex-direction: column;
+    }
+    
+    .score, .high-score {
+        width: 100%;
+    }
+    
+    .instructions:after {
+        content: '\A Tap left/right side to move';
+        white-space: pre;
+    }
+}
